@@ -3,11 +3,15 @@
 | | |
 | --- | --- |
 | Issue | BAC-6 |
-| Version | v1.1 draft, 26 Oct 2026 (v1: 25 Oct 2026) |
-| Owner | Khushboo |
+| Version | v1.2 draft, 19 Nov 2026 (v1.1: 26 Oct 2026; v1: 25 Oct 2026) |
+| Owner | Ankit |
 | Covers | POC (Phase 1) and MVP (Phase 2); later items listed for completeness |
 | Builds on | BAC-5: vision, scope, personas and user journeys |
 | Feeds | BAC-7 (NFRs), BAC-9 (domain model), API design (BAC-18), tests in every phase |
+
+### Changes in v1.2
+
+- **Camera and microphone flags (FR-22):** withdrawn from the MVP and moved to Later (Phase 5), because a flag with no monitoring behind it would suggest checks that do not happen. UC-3, UC-5, the glossary, the decisions table and the requirements count are updated to match.
 
 ### Changes in v1.1
 
@@ -68,7 +72,7 @@
 | FR-19 | A teacher *publishes* a draft. Publishing validates it (at least one question, duration above zero, every question valid) and creates an immutable *snapshot*. | POC | A valid draft becomes Published with snapshot version 1; an invalid one stays Draft with every problem listed. |
 | FR-20 | A teacher edits a published quiz. This creates a new draft *quiz version*; publishing it creates a new snapshot. Attempts already started keep the version they started on. | MVP | A student mid-attempt sees no change; a student starting after the new publish gets the new version. |
 | FR-21 | A teacher archives a quiz. An archived quiz cannot be started; its results remain available. | MVP | Starting an archived quiz is refused; its results still load. |
-| FR-22 | A teacher sets *proctoring flags*: camera required and microphone required. The backend stores them and returns them with the paper; the browser enforces them. | MVP | The flags are saved with the snapshot and present in the paper response. |
+| FR-22 | Camera and microphone requirement flags on a quiz, delivered together with real proctoring. Withdrawn from the MVP on 19 Nov 2026: a flag with no monitoring behind it would suggest checks that do not happen. | Later | Phase 5. |
 | FR-23 | A teacher sets *release settings* per quiz, each on or off: (a) show score, (b) show correct answers, (c) show rank and percentile. Defaults: score on, correct answers off, rank and percentile off. The teacher can change them at any time, including after the quiz closes (BR-17). | MVP | Each setting alone controls what students see. Correct answers and rank appear only after *quiz close*. Turning a setting on after close releases it immediately; turning it off hides it again in the app. |
 | FR-24 | A teacher enables shuffling of question order and option order. Each student gets a stable order for their whole attempt. | MVP | Two students see different orders; one student sees the same order after resuming. |
 | FR-25 | True/false, numeric and short-text questions; tags and search in the question bank. | Later | Phase 3. |
@@ -199,7 +203,7 @@
 - **Main flow:**
     1. The teacher adds questions to their bank (FR-14).
     2. The teacher creates a draft quiz and adds questions in order (FR-17).
-    3. The teacher sets proctoring flags, release settings, shuffling and negative marking (FR-22 to FR-24, FR-59).
+    3. The teacher sets release settings, shuffling and negative marking (FR-23, FR-24, FR-59).
     4. The teacher previews the quiz (FR-18).
     5. The teacher publishes it; a snapshot is created (FR-19, BR-3).
 - **Alternate and error paths:**
@@ -227,7 +231,7 @@
 - **Precondition:** the quiz is assigned to the student's class and its window is open.
 - **Main flow:**
     1. The student opens the quiz and starts the attempt (FR-32).
-    2. The server records the deadline and returns the paper, flags and remaining time.
+    2. The server records the deadline and returns the paper and remaining time.
     3. The student answers; each answer is saved as they go (FR-34, FR-35).
     4. The student submits (FR-38).
     5. The system scores the attempt (FR-43) and the student sees their score, if score release is on (FR-47).
@@ -293,7 +297,7 @@
 | Release settings | Three per-quiz switches the teacher controls: show score, show correct answers, show rank and percentile. |
 | Rank | A student's position among the submitted attempts of an assignment; equal scores share a rank. |
 | Percentile | The share of submitted attempts in an assignment that scored less than or equal to this one, as a number from 0 to 100. |
-| Proctoring flags | Camera required and microphone required. Stored by the backend, enforced by the browser. |
+| Proctoring flags | Camera required and microphone required settings on a quiz. Not in the MVP; they arrive with real proctoring in Phase 5 (FR-22). |
 | Idempotency key | A client-generated ID sent with a retryable request, so a repeat is recognised and not applied twice. |
 
 ## 7. Decisions
@@ -308,6 +312,7 @@
 | Multi-correct scoring | All or nothing; partial credit later. | FR-44, FR-46 |
 | Shuffling questions and options | In the MVP, to reduce copying in a classroom. | FR-24 |
 | CSV import when some rows are bad | Reject the whole file and list every error. | FR-3 |
+| Camera and microphone flags in the MVP (decided 19 Nov 2026) | No. They arrive with real proctoring in Phase 5, so the product never implies monitoring it does not do. | FR-22 |
 
 ### 7.2 Details proposed with the new decisions, to confirm
 
@@ -331,12 +336,12 @@
 | Capability | POC | MVP | Later |
 | --- | --- | --- | --- |
 | Identity | 5 | 6 | 1 |
-| Authoring | 6 | 7 | 2 |
+| Authoring | 6 | 6 | 3 |
 | Scheduling | 0 | 5 | 0 |
 | Exam delivery | 6 | 5 | 0 |
 | Scoring | 3 | 0 | 1 |
 | Results and notifications | 2 | 9 | 1 |
-| **Total** | **22** | **32** | **5** |
+| **Total** | **22** | **31** | **6** |
 
 FR-42, FR-44 and FR-47 are counted as POC; their MVP extensions (window checks, the penalty, the release setting) are built with the MVP features they depend on.
 
