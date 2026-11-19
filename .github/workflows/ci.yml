@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Least privilege: jobs can read the repository and nothing else,
+# unless a job asks for more.
+permissions:
+  contents: read
+
+# A newer push to the same PR cancels the older, still-running check.
+# Runs on main are never cancelled.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 21 and the Gradle cache
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      # Compiles, runs the tests and the Spotless format check.
+      - name: Build
+        run: ./gradlew build
+
+  secret-scan:
+    name: secret-scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write # lets gitleaks comment on the offending line
+    steps:
+      - name: Check out the full history
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # scan every commit in the PR, not only the last one
+
+      - name: Scan for secrets
+        uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
