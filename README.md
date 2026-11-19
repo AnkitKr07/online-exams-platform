@@ -64,3 +64,37 @@ curl http://localhost:8081/actuator/health
 ## Licence
 
 No licence is granted. The source is public for reading; all rights are reserved.
+## Run locally (database)
+
+Prerequisites: Docker Desktop (WSL2 backend), Engine 29.3 or newer.
+
+Create your local environment file, then replace every `change-me` in it with a real password. `infra/.env` is git-ignored; never commit it.
+
+```
+cd infra
+cp .env.example .env
+```
+
+Start PostgreSQL and wait until it shows `healthy`:
+
+```
+docker compose up -d
+docker compose ps
+```
+
+PostgreSQL is published on `127.0.0.1:5433`, not the default 5432, so it can run next to a PostgreSQL installed on your machine. The first start creates one database and one least-privilege user per service:
+
+| Service | Database | User | Password variable |
+|---|---|---|---|
+| identity-service | `identity_db` | `identity_user` | `IDENTITY_DB_PASSWORD` |
+| assessment-service | `assessment_db` | `assessment_user` | `ASSESSMENT_DB_PASSWORD` |
+| exam-service | `exam_db` | `exam_user` | `EXAM_DB_PASSWORD` |
+
+The init script (`infra/postgres/init`) runs only when the data volume is empty. To wipe the data and run it again:
+
+```
+docker compose down -v
+docker compose up -d
+```
+
+Stop without deleting data: `docker compose down`.
