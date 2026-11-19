@@ -2,6 +2,7 @@
 spring-boot = "4.1.1"
 spring-cloud = "2025.1.2"
 spring-dependency-management = "1.1.7"
+spotless = "8.6.0"
 
 [libraries]
 spring-cloud-dependencies = { module = "org.springframework.cloud:spring-cloud-dependencies", version.ref = "spring-cloud" }
@@ -9,3 +10,4 @@ spring-cloud-dependencies = { module = "org.springframework.cloud:spring-cloud-d
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
