@@ -3,8 +3,8 @@
 | | |
 | --- | --- |
 | Issue | BAC-7 |
-| Version | v1.1 draft, 26 Oct 2026 (v1.1 adds NFR-77 for rank and percentile, and a privacy note on ranking) |
-| Owner | Khushboo |
+| Version | v1.2 draft, 19 Nov 2026 (v1.1, 26 Oct 2026: adds NFR-77 for rank and percentile, and a privacy note on ranking. v1.2: NFR-7 and NFR-8 sized for 1,000 students per assignment; database-per-service wording in NFR-37, NFR-61 and section 13) |
+| Owner | Ankit |
 | Builds on | BAC-5 (vision, pilot metrics), BAC-6 (functional requirements, business rules) |
 | Feeds | BAC-8 (capacity estimate), BAC-9 (domain model), BAC-10 (ADRs), Phase 4 load tests |
 
@@ -49,8 +49,8 @@ Measured by: Micrometer request-timing histograms at the gateway (`http.server.r
 | NFR-4 | Resume an attempt | ≤ 500 ms | ≤ 1 s | Normal load | MVP |
 | NFR-5 | Login | ≤ 800 ms | ≤ 1.5 s | Login rate of the pre-exam 10 minutes | MVP |
 | NFR-6 | Teacher authoring and admin operations | ≤ 500 ms | ≤ 1 s | Normal load | MVP |
-| NFR-7 | Results list for one assignment of up to 200 students | ≤ 1 s | ≤ 2 s | Normal load | MVP |
-| NFR-8 | CSV export of one assignment, up to 200 students | ≤ 3 s | ≤ 5 s | Normal load | MVP |
+| NFR-7 | Results list for one assignment of up to 1,000 students | ≤ 1 s | ≤ 2 s | Normal load | MVP |
+| NFR-8 | CSV export of one assignment, up to 1,000 students | ≤ 3 s | ≤ 5 s | Normal load | MVP |
 
 | ID | Requirement | Target | Measured by | Phase |
 | --- | --- | --- | --- | --- |
@@ -124,7 +124,7 @@ Hard limits enforced by validation in every phase. They keep payloads and capaci
 | NFR-34 | Encryption at rest | Database volume and backups encrypted | Host volume settings; backup encryption config | MVP |
 | NFR-35 | Secrets kept out of Git | 0 secrets in the repository | Secret scanning (for example gitleaks) on every PR | POC |
 | NFR-36 | No known critical vulnerabilities in shipped images | 0 critical CVEs at release; fixes within 7 days of disclosure | Dependency and image scan (for example Trivy, Dependabot) in CI | MVP |
-| NFR-37 | Least-privilege database access | Each service uses its own user with rights only on its own schema; none is a superuser | Permission test: each service user fails to read another schema | MVP |
+| NFR-37 | Least-privilege database access | Each service has its own database and its own user, with rights only on its own database; none is a superuser | Permission test: each service user is refused a connection to every other service's database | MVP |
 | NFR-38 | Admin and teacher actions are audited (user changes, publish, deletions, exports) | 100% of listed actions in an append-only audit log | Audit integration test | v1 |
 | NFR-39 | Security review before public launch | OWASP ASVS Level 1 checklist closed | Checklist in the repo, reviewed at the Phase 3 gate | v1 |
 
@@ -180,7 +180,7 @@ Parental consent stays with the school, as agreed in BAC-5. The platform makes i
 | NFR-58 | Every FR acceptance criterion and every business rule has at least one automated test | 100% traceable | Test names reference FR and BR IDs; a script checks for gaps | POC |
 | NFR-59 | CI time per pull request | ≤ 10 minutes | GitHub Actions run duration | POC |
 | NFR-60 | Time from a clean clone to the full stack running locally | ≤ 30 minutes with one documented command | Timed run on a fresh machine at each gate | POC |
-| NFR-61 | Each service builds, tests and deploys on its own; no shared database tables | 0 cross-service schema access | Architecture test (for example ArchUnit) plus NFR-37 | POC |
+| NFR-61 | Each service builds, tests and deploys on its own; no shared database tables | 0 cross-service database access | Architecture test (for example ArchUnit) plus NFR-37 | POC |
 | NFR-62 | Consistent formatting and no new static-analysis warnings | 0 formatting violations; 0 new high-severity findings | Spotless and a static-analysis step in CI | POC |
 | NFR-63 | Database changes only through versioned migrations; backward compatible from v1 | 0 manual schema changes; expand–contract for breaking changes | Flyway history; migration review | POC, v1 |
 | NFR-64 | No breaking API changes within a version | 0 breaking changes under `/api/v1` | OpenAPI diff check in CI | v1 |
@@ -218,7 +218,7 @@ Parental consent stays with the school, as agreed in BAC-5. The platform makes i
 | Authoring must not slow exams (NFR-27) | Assessment and Exam Delivery are separate; Exam Delivery holds its own copy of the snapshot. |
 | Tenant isolation (NFR-28) | A school ID on every row; tenant resolved from the token in one filter; isolation tests in CI. |
 | Low-end phones on patchy data (NFR-11, NFR-72) | A small paper payload, no answer key sent, resumable attempts and a server-owned clock. |
-| Free-tier VM (NFR-66 to NFR-68) | Few services, shared PostgreSQL instance with a schema per service, tight JVM memory limits, arm64 images. |
+| Free-tier VM (NFR-66 to NFR-68) | Few services, shared PostgreSQL instance with a database per service, tight JVM memory limits, arm64 images. |
 | Children's data (NFR-41 to NFR-46) | Minimal student schema, no third-party scripts, IDs-only logs, retention and deletion jobs. |
 
 ## 14. Decisions to confirm
