@@ -27,7 +27,7 @@ This is an assessment platform, not an LMS: it owns quizzes, attempts and result
 | School self-sign-up, email verification, password reset, Google sign-in | POC, MVP | Phase 3 | The pilot school is set up by us; resets during the pilot are done by its admin |
 | Question types other than multiple choice (true/false, numeric, short text) | POC, MVP | Phase 3 | MCQ covers most school and entrance-exam practice tests and keeps scoring simple |
 | Rankings across classes and quizzes, question analytics, large exports | POC, MVP | Phase 3 | Per-quiz results, each student's rank and percentile within the quiz, and a CSV export answer the pilot teacher's first questions |
-| Proctoring beyond on/off camera and microphone flags | POC, MVP | Phase 5 | Recording and analysing video is costly, privacy-heavy for minors and not needed for practice tests |
+| Proctoring, including camera and microphone requirement flags | POC, MVP | Phase 5 | Recording and analysing video is costly, privacy-heavy for minors and not needed for practice tests. A flag with no monitoring behind it would suggest checks that do not happen. |
 | AI-generated questions and image-based question input | POC, MVP | Phase 5 | External cost and latency; teachers must trust the basic product first |
 | LMS integration and webhooks | POC, MVP | Phase 5 | Integration matters once many schools use it; one pilot school does not need it |
 | Native mobile apps | POC, MVP | Not planned | A responsive web client works on the phones students already have |
@@ -95,7 +95,7 @@ The journeys below are written for the MVP. The failure cases under each are whe
 
 1. Priya logs in on her laptop and opens the Class 10 maths question bank.
 2. She adds 20 multiple-choice questions, some with more than one correct option.
-3. She creates a quiz from them: 30 minutes, marks per question, a start window of Monday 10:00–10:15, assigned to section 10-B, camera required.
+3. She creates a quiz from them: 30 minutes, marks per question, a start window of Monday 10:00–10:15, assigned to section 10-B.
 4. She previews it as a student would see it.
 5. She publishes it. The quiz is frozen as a snapshot, and students in 10-B see it under Upcoming.
 
@@ -146,6 +146,7 @@ When things go wrong:
 - [x] What do students see after a quiz? Decided 26 Oct 2026: the teacher chooses per quiz whether students see their score, the correct answers, and their rank and percentile. Negative marking is also chosen per quiz.
 - [x] Can a teacher allow more than one attempt per student? Decided 26 Oct 2026: no, one attempt per quiz in the POC and MVP.
 - [ ] Does the pilot start with a school or a coaching institute?
+- [x] Should the quiz have camera and microphone flags in the MVP? Decided 19 Nov 2026: no. They arrive with real proctoring in Phase 5, so the product never implies monitoring it does not do.
 
 ### What this feeds
 
