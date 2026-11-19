@@ -1,0 +1,38 @@
+version: 2
+
+updates:
+  # Gradle: dependencies and plugins from gradle/libs.versions.toml and the build files.
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Kolkata
+    commit-message:
+      prefix: build
+      include: scope
+    ignore:
+      # Spring Boot and Spring Cloud are upgraded together, on purpose:
+      # Spring Cloud refuses to start on a Boot version it does not support,
+      # and CI only builds, it does not start the services. Patch updates still arrive.
+      - dependency-name: "org.springframework.boot*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+      - dependency-name: "org.springframework.cloud*"
+        update-types:
+          - version-update:semver-major
+          - version-update:semver-minor
+
+  # GitHub Actions: the versions used in .github/workflows.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Kolkata
+    commit-message:
+      prefix: ci
+      include: scope
