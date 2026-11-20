@@ -4,7 +4,7 @@
 | --- | --- |
 | Issue | BAC-6 |
 | Version | v1.3 draft, 20 Nov 2026 (v1.2: 20 Nov 2026; v1.1: 26 Oct 2026; v1: 25 Oct 2026) |
-| Owner | Khushboo |
+| Owner | Ankit |
 | Covers | POC (Phase 1) and MVP (Phase 2); later items listed for completeness |
 | Builds on | BAC-5: vision, scope, personas and user journeys |
 | Feeds | BAC-7 (NFRs), BAC-9 (domain model), API design (BAC-18), tests in every phase |

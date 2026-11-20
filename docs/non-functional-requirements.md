@@ -3,8 +3,8 @@
 | | |
 | --- | --- |
 | Issue | BAC-7 |
-| Version | v1.5 draft, 20 Nov 2026 (v1.5 says database per service in NFR-37 and section 13, per ADR-003. v1.4 adds NFR-83: no camera or microphone use before proctoring in Phase 5, and permission only when a proctored attempt starts. v1.3 makes reminder emails expire in NFR-69 and records that the client pays for a scale-up. v1.2 added NFR-78 to NFR-82 for free-first, scale-on-demand, and changed NFR-19, NFR-66 and NFR-69. v1.1, 26 Oct 2026, added NFR-77 for rank and percentile, and a privacy note on ranking) |
-| Owner | Khushboo |
+| Version | v1.6 draft, 20 Nov 2026 (v1.6: NFR-7 and NFR-8 sized for 1,000 students per assignment, matching the limits table. v1.5 says database per service in NFR-37 and section 13, per ADR-003. v1.4 adds NFR-83: no camera or microphone use before proctoring in Phase 5, and permission only when a proctored attempt starts. v1.3 makes reminder emails expire in NFR-69 and records that the client pays for a scale-up. v1.2 added NFR-78 to NFR-82 for free-first, scale-on-demand, and changed NFR-19, NFR-66 and NFR-69. v1.1, 26 Oct 2026, added NFR-77 for rank and percentile, and a privacy note on ranking) |
+| Owner | Ankit |
 | Builds on | BAC-5 (vision, pilot metrics), BAC-6 (functional requirements, business rules) |
 | Feeds | BAC-8 (capacity estimate), BAC-9 (domain model), BAC-10 (ADRs), Phase 4 load tests |
 
@@ -49,8 +49,8 @@ Measured by: Micrometer request-timing histograms at the gateway (`http.server.r
 | NFR-4 | Resume an attempt | ≤ 500 ms | ≤ 1 s | Normal load | MVP |
 | NFR-5 | Login | ≤ 800 ms | ≤ 1.5 s | Login rate of the pre-exam 10 minutes | MVP |
 | NFR-6 | Teacher authoring and admin operations | ≤ 500 ms | ≤ 1 s | Normal load | MVP |
-| NFR-7 | Results list for one assignment of up to 200 students | ≤ 1 s | ≤ 2 s | Normal load | MVP |
-| NFR-8 | CSV export of one assignment, up to 200 students | ≤ 3 s | ≤ 5 s | Normal load | MVP |
+| NFR-7 | Results list for one assignment of up to 1,000 students | ≤ 1 s | ≤ 2 s | Normal load | MVP |
+| NFR-8 | CSV export of one assignment, up to 1,000 students | ≤ 3 s | ≤ 5 s | Normal load | MVP |
 
 | ID | Requirement | Target | Measured by | Phase |
 | --- | --- | --- | --- | --- |
