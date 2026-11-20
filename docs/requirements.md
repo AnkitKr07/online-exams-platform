@@ -27,7 +27,7 @@ This is an assessment platform, not an LMS: it owns quizzes, attempts and result
 | School self-sign-up, email verification, password reset, Google sign-in | POC, MVP | Phase 3 | The pilot school is set up by us; resets during the pilot are done by its admin |
 | Question types other than multiple choice (true/false, numeric, short text) | POC, MVP | Phase 3 | MCQ covers most school and entrance-exam practice tests and keeps scoring simple |
 | Rankings across classes and quizzes, question analytics, large exports | POC, MVP | Phase 3 | Per-quiz results, each student's rank and percentile within the quiz, and a CSV export answer the pilot teacher's first questions |
-| Proctoring, including camera and microphone requirement flags | POC, MVP | Phase 5 | Recording and analysing video is costly, privacy-heavy for minors and not needed for practice tests. A flag with no monitoring behind it would suggest checks that do not happen. |
+| Proctoring, including camera and microphone requirements | POC, MVP | Phase 5 | Recording and analysing video is costly, privacy-heavy for minors and not needed for practice tests. Until Phase 5 the product asks for no camera or microphone permission at all; when it does, it asks only as a proctored attempt starts. |
 | AI-generated questions and image-based question input | POC, MVP | Phase 5 | External cost and latency; teachers must trust the basic product first |
 | LMS integration and webhooks | POC, MVP | Phase 5 | Integration matters once many schools use it; one pilot school does not need it |
 | Native mobile apps | POC, MVP | Not planned | A responsive web client works on the phones students already have |
@@ -101,8 +101,8 @@ The journeys below are written for the MVP. The failure cases under each are whe
 
 When things go wrong:
 
-- She spots a typo after publishing. Editing creates a new version; students who already started keep the version they started.
-- She assigns the wrong section. She can reassign until the start window opens, not after.
+- She spots a typo after publishing. Before the exam she edits and republishes. From 5 minutes before the window opens until the quiz closes, the quiz is locked, so the paper never changes mid-exam.
+- She assigns the wrong section. She can reassign until 5 minutes before the start window opens, not after.
 
 ### 2. Student takes a timed quiz
 
@@ -146,7 +146,6 @@ When things go wrong:
 - [x] What do students see after a quiz? Decided 26 Oct 2026: the teacher chooses per quiz whether students see their score, the correct answers, and their rank and percentile. Negative marking is also chosen per quiz.
 - [x] Can a teacher allow more than one attempt per student? Decided 26 Oct 2026: no, one attempt per quiz in the POC and MVP.
 - [ ] Does the pilot start with a school or a coaching institute?
-- [x] Should the quiz have camera and microphone flags in the MVP? Decided 19 Nov 2026: no. They arrive with real proctoring in Phase 5, so the product never implies monitoring it does not do.
 
 ### What this feeds
 
@@ -159,6 +158,6 @@ Answer each in two or three sentences in a comment; I'll push back like a produc
 
 - [ ] Why would a school pay for this instead of using Google Forms for free?
 - [ ] Why does the school pay and not the students, when students benefit most?
-- [ ] Camera and microphone flags exist in the MVP but proctoring doesn't. Isn't that misleading to teachers?
+- [ ] Teachers may expect an online exam product to proctor. How do you set that expectation in the MVP, and why is it safe to leave proctoring until Phase 5?
 - [ ] Why is multiple choice enough for the MVP?
 - [ ] Which single metric would make you call the pilot a failure, and why that one?

@@ -3,8 +3,8 @@
 | | |
 | --- | --- |
 | Issue | BAC-7 |
-| Version | v1.2 draft, 19 Nov 2026 (v1.1, 26 Oct 2026: adds NFR-77 for rank and percentile, and a privacy note on ranking. v1.2: NFR-7 and NFR-8 sized for 1,000 students per assignment; database-per-service wording in NFR-37, NFR-61 and section 13) |
-| Owner | Ankit |
+| Version | v1.5 draft, 20 Nov 2026 (v1.5 says database per service in NFR-37 and section 13, per ADR-003. v1.4 adds NFR-83: no camera or microphone use before proctoring in Phase 5, and permission only when a proctored attempt starts. v1.3 makes reminder emails expire in NFR-69 and records that the client pays for a scale-up. v1.2 added NFR-78 to NFR-82 for free-first, scale-on-demand, and changed NFR-19, NFR-66 and NFR-69. v1.1, 26 Oct 2026, added NFR-77 for rank and percentile, and a privacy note on ranking) |
+| Owner | Khushboo |
 | Builds on | BAC-5 (vision, pilot metrics), BAC-6 (functional requirements, business rules) |
 | Feeds | BAC-8 (capacity estimate), BAC-9 (domain model), BAC-10 (ADRs), Phase 4 load tests |
 
@@ -49,15 +49,15 @@ Measured by: Micrometer request-timing histograms at the gateway (`http.server.r
 | NFR-4 | Resume an attempt | ≤ 500 ms | ≤ 1 s | Normal load | MVP |
 | NFR-5 | Login | ≤ 800 ms | ≤ 1.5 s | Login rate of the pre-exam 10 minutes | MVP |
 | NFR-6 | Teacher authoring and admin operations | ≤ 500 ms | ≤ 1 s | Normal load | MVP |
-| NFR-7 | Results list for one assignment of up to 1,000 students | ≤ 1 s | ≤ 2 s | Normal load | MVP |
-| NFR-8 | CSV export of one assignment, up to 1,000 students | ≤ 3 s | ≤ 5 s | Normal load | MVP |
+| NFR-7 | Results list for one assignment of up to 200 students | ≤ 1 s | ≤ 2 s | Normal load | MVP |
+| NFR-8 | CSV export of one assignment, up to 200 students | ≤ 3 s | ≤ 5 s | Normal load | MVP |
 
 | ID | Requirement | Target | Measured by | Phase |
 | --- | --- | --- | --- | --- |
 | NFR-9 | Server errors on the exam path at the phase's burst level | < 0.1% of requests | Gateway 5xx count ÷ exam-path requests per window | MVP |
 | NFR-10 | Results email after quiz close (from BAC-5) | 95% within 5 minutes; 100% within 30 minutes | Time between the quiz-close event and the provider's send confirmation | MVP |
 | NFR-11 | Student paper size, 50 questions without images | ≤ 200 KB compressed | Response size in an integration test | MVP |
-| NFR-12 | Scale target sustained: 10,000 concurrent students | NFR-1 to NFR-3 and NFR-9 hold | Phase 4 load-test report | Scale |
+| NFR-12 | Scale target sustained: 10,000 concurrent students, on the capacity that rung needs (BAC-8 section 12), not on the free VM | NFR-1 to NFR-3 and NFR-9 hold | Phase 4 load-test report | Scale |
 | NFR-77 | Rank and percentile ready after quiz close (FR-58) | Within 5 minutes for an assignment of up to 1,000 submitted attempts; before the results email is sent | Time between the quiz-close event and the rank rows being written | MVP |
 
 ## 4. Durability and data loss
@@ -72,7 +72,7 @@ Two different losses matter here: an answer lost on its way to the server, and d
 | NFR-16 | Recovery time objective (RTO) for a crashed service process | ≤ 1 minute (automatic restart) | Kill a container; time until health checks pass | MVP |
 | NFR-17 | RTO if the whole VM is lost | MVP: ≤ 8 h, best effort. v1: ≤ 1 h, following a written runbook | Timed restore drill, at least once per quarter from v1 | MVP, v1 |
 | NFR-18 | Backups are restorable | 1 successful restore drill before v1 launch, then quarterly | Drill log in the runbook | v1 |
-| NFR-19 | Backup retention | 35 days | Object-storage lifecycle rule | v1 |
+| NFR-19 | Backup retention | On the free tier: 4 weekly base backups plus continuous WAL archiving, so any point in the last 28 days can be restored (about 18 GB at the end of year 1, BAC-8 section 5.3). On a paid bucket, when a client's contract requires it: 35 days of daily backups. | Object-storage lifecycle rule; storage used against the 20 GB free limit | v1 |
 
 A single-VM MVP cannot survive losing the VM in the middle of an exam. That is accepted for a one-class pilot, and NFR-15 and NFR-17 make the risk explicit. Section 12 asks what happens to affected attempts after an outage.
 
@@ -97,6 +97,16 @@ Exam windows are known in advance from the schedule, so the platform can protect
 | NFR-25 | Exam Delivery scales horizontally. It keeps no attempt state in memory, so any instance can serve any request. | Throughput grows roughly linearly from 1 to 3 instances | Load test at 1, 2 and 3 replicas | Scale |
 | NFR-26 | A burst in one school does not slow another school's exam | p95 for a second school's students stays within NFR-1 to NFR-3 during a burst in the first | Two-tenant load test | Scale |
 | NFR-27 | Authoring traffic does not affect live exams, and the reverse | Exam-path p95 unchanged while running a bulk import and an export | Mixed load test | Scale |
+
+**Free first, scale on demand** (decided 20 Nov 2026). The platform runs on free tiers until a client's requirement crosses a scale-up trigger, and only then is the next rung of capacity bought, for that client. So the platform must be *scale-ready* from day one: adding capacity is a configuration change, never a rewrite. The rungs, triggers and sizing method are in BAC-8 section 12. NFR-78 to NFR-82 make that testable.
+
+| ID | Requirement | Target | Measured by | Phase |
+| --- | --- | --- | --- | --- |
+| NFR-78 | Scale by configuration: more instances of a service, a service's database on its own server, or a larger host need configuration changes only | 0 code changes, 0 schema changes | Drill: run 2 Exam Delivery instances, and move one service's database to a second PostgreSQL container by changing environment variables only; run the load test before and after | v1 |
+| NFR-79 | Every service image builds for arm64 and amd64, so one release runs on the free Arm VM and on any paid host | Both builds green in CI; the smoke test passes on each | CI pipeline | MVP |
+| NFR-80 | External providers (email, object storage with an S3-compatible API) sit behind interfaces, so changing provider needs configuration and at most one adapter | A fake provider replaces each in the integration tests with no change to business code | Testcontainers run in CI | MVP |
+| NFR-81 | Free-tier headroom is watched. Every scale-up trigger in BAC-8 section 12.3 has a check. | MVP: a weekly manual check of `docker stats` and provider dashboards, logged in the runbook. v1: an alert for each trigger. | Check log; alert rules | MVP, v1 |
+| NFR-82 | Capacity is re-checked before a client goes live. If a client's size would take the platform past 70% of the current rung's estimated capacity, BAC-8 is re-run with their numbers, and the next rung is in place and load-tested first. | 100% of such onboardings | Onboarding checklist item | v1 |
 
 Hard limits enforced by validation in every phase. They keep payloads and capacity maths bounded.
 
@@ -124,7 +134,7 @@ Hard limits enforced by validation in every phase. They keep payloads and capaci
 | NFR-34 | Encryption at rest | Database volume and backups encrypted | Host volume settings; backup encryption config | MVP |
 | NFR-35 | Secrets kept out of Git | 0 secrets in the repository | Secret scanning (for example gitleaks) on every PR | POC |
 | NFR-36 | No known critical vulnerabilities in shipped images | 0 critical CVEs at release; fixes within 7 days of disclosure | Dependency and image scan (for example Trivy, Dependabot) in CI | MVP |
-| NFR-37 | Least-privilege database access | Each service has its own database and its own user, with rights only on its own database; none is a superuser | Permission test: each service user is refused a connection to every other service's database | MVP |
+| NFR-37 | Least-privilege database access | Each service uses its own user with rights only on its own database; none is a superuser (ADR-003) | Permission test: each service user fails to connect to another service's database | MVP |
 | NFR-38 | Admin and teacher actions are audited (user changes, publish, deletions, exports) | 100% of listed actions in an append-only audit log | Audit integration test | v1 |
 | NFR-39 | Security review before public launch | OWASP ASVS Level 1 checklist closed | Checklist in the repo, reviewed at the Phase 3 gate | v1 |
 
@@ -156,6 +166,7 @@ Hard limits enforced by validation in every phase. They keep payloads and capaci
 | NFR-48 | Breach response: affected schools told without delay so they can report to the Board within 72 hours | Schools notified within 24 h of us becoming aware | Breach runbook with a tabletop drill before v1 | v1 |
 | NFR-49 | Data hosted in India | Production database and backups in an Indian cloud region | Infrastructure configuration | MVP |
 | NFR-50 | Proctoring (Phase 5) passes a privacy review before it is built | Written purpose and necessity assessment, signed off before Phase 5 | Review document in `docs/` | Later |
+| NFR-83 | Camera and microphone are not used before proctoring (Phase 5). The POC and MVP client never request them. From Phase 5, permission is requested only when a proctored attempt starts (FR-22), and only for the devices proctoring needs. | MVP: 0 camera or microphone permission requests anywhere in the student client. Phase 5: 0 requests at login, on the quiz list or for unproctored quizzes. | Browser end-to-end test that records `getUserMedia` calls across a full student journey | MVP, Later |
 
 Rank and percentile (FR-58) are part of the assessment the school asks for. They are computed within one assignment, shown only to the student concerned and their teacher (BR-19), and never combined across quizzes into a profile of a student. Wider analytics in Phase 3 need the same check against NFR-42 before they are built.
 
@@ -180,7 +191,7 @@ Parental consent stays with the school, as agreed in BAC-5. The platform makes i
 | NFR-58 | Every FR acceptance criterion and every business rule has at least one automated test | 100% traceable | Test names reference FR and BR IDs; a script checks for gaps | POC |
 | NFR-59 | CI time per pull request | ≤ 10 minutes | GitHub Actions run duration | POC |
 | NFR-60 | Time from a clean clone to the full stack running locally | ≤ 30 minutes with one documented command | Timed run on a fresh machine at each gate | POC |
-| NFR-61 | Each service builds, tests and deploys on its own; no shared database tables | 0 cross-service database access | Architecture test (for example ArchUnit) plus NFR-37 | POC |
+| NFR-61 | Each service builds, tests and deploys on its own; no shared database tables | 0 cross-service schema access | Architecture test (for example ArchUnit) plus NFR-37 | POC |
 | NFR-62 | Consistent formatting and no new static-analysis warnings | 0 formatting violations; 0 new high-severity findings | Spotless and a static-analysis step in CI | POC |
 | NFR-63 | Database changes only through versioned migrations; backward compatible from v1 | 0 manual schema changes; expand–contract for breaking changes | Flyway history; migration review | POC, v1 |
 | NFR-64 | No breaking API changes within a version | 0 breaking changes under `/api/v1` | OpenAPI diff check in CI | v1 |
@@ -190,10 +201,10 @@ Parental consent stays with the school, as agreed in BAC-5. The platform makes i
 
 | ID | Requirement | Target | Measured by | Phase |
 | --- | --- | --- | --- | --- |
-| NFR-66 | Monthly infrastructure cost | ₹0 through Phase 4, excluding an optional domain name | Cloud billing page | All |
+| NFR-66 | Monthly infrastructure cost | ₹0 until a scale-up trigger fires (BAC-8 section 12.3), excluding an optional domain name. After that, each paid item traces to a named client requirement, is priced before it is bought, and is paid for by that client. | Cloud billing page; a one-line decision record per paid item | All |
 | NFR-67 | Whole production stack fits the free Arm VM (2 OCPU, 12 GB RAM) | Peak memory ≤ 10 GB, leaving 2 GB headroom | `docker stats` during a pilot exam and the load test | MVP |
 | NFR-68 | Each Spring Boot service's memory | Heap ≤ 384 MB; container ≤ 512 MB in MVP | Container limits; GC logs | MVP |
-| NFR-69 | Email volume stays inside the provider's free quota | Pilot needs about 100 emails a day | Provider dashboard | MVP |
+| NFR-69 | Email volume stays inside the provider's free quota. Teacher emails (FR-53) are always sent first; student emails (FR-31, FR-54) use what is left of the day's quota. Result emails (FR-54) that do not fit are queued for the next day. Reminders (FR-31) expire when the window opens and are dropped, not queued. Results are in the app either way (FR-55). | Pilot needs about 100 emails a day, inside the quota. At v1 the estimate is about 6,000 a day (BAC-8 section 5.2), so a paid tier is bought only when a client wants every student email the same day. | Provider dashboard; queue length | MVP |
 | NFR-70 | AI spend in Phase 5 | A hard monthly cap set before any AI feature ships | Provider budget alert | Later |
 
 ## 12. Compatibility and usability
@@ -218,7 +229,8 @@ Parental consent stays with the school, as agreed in BAC-5. The platform makes i
 | Authoring must not slow exams (NFR-27) | Assessment and Exam Delivery are separate; Exam Delivery holds its own copy of the snapshot. |
 | Tenant isolation (NFR-28) | A school ID on every row; tenant resolved from the token in one filter; isolation tests in CI. |
 | Low-end phones on patchy data (NFR-11, NFR-72) | A small paper payload, no answer key sent, resumable attempts and a server-owned clock. |
-| Free-tier VM (NFR-66 to NFR-68) | Few services, shared PostgreSQL instance with a database per service, tight JVM memory limits, arm64 images. |
+| Free-tier VM (NFR-66 to NFR-68) | Few services, shared PostgreSQL instance with a database per service (ADR-003), tight JVM memory limits, arm64 images. |
+| Free first, scale on demand (NFR-66, NFR-78 to NFR-82) | Scale-ready rules from day one: stateless services, a database per service behind its own connection URL, `school_id` on every row, providers behind interfaces, configuration from the environment, arm64 and amd64 images. Capacity is bought rung by rung when a trigger fires (BAC-8 section 12). |
 | Children's data (NFR-41 to NFR-46) | Minimal student schema, no third-party scripts, IDs-only logs, retention and deletion jobs. |
 
 ## 14. Decisions to confirm
@@ -231,6 +243,9 @@ Parental consent stays with the school, as agreed in BAC-5. The platform makes i
 | Default retention of results | 2 years after the attempt, shorter per school | NFR-44, storage |
 | What happens to attempts hit by a platform outage | Proposed new FR: an admin can extend the deadline of affected attempts | NFR-15, NFR-17 |
 | Pilot burst size | 200 students, 5x the pilot class | Section 2 |
+| Backups on the free tier | 4 weekly base backups plus WAL archiving; 35 daily backups only on a paid bucket | NFR-19; BAC-8 section 11. Follows from free-first. |
+| Student emails over the free quota | Decided 20 Nov 2026: reminders expire when the window opens and are dropped; result emails queue for the next day | NFR-69, FR-31, FR-54 |
+| Who pays for a scale-up rung | Decided 20 Nov 2026: the client whose requirement triggered it | NFR-66; a pricing input (BAC-5) |
 
 ## 15. Review questions for you
 

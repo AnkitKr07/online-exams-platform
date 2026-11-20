@@ -3,15 +3,27 @@
 | | |
 | --- | --- |
 | Issue | BAC-6 |
-| Version | v1.2 draft, 19 Nov 2026 (v1.1: 26 Oct 2026; v1: 25 Oct 2026) |
-| Owner | Ankit |
+| Version | v1.3 draft, 20 Nov 2026 (v1.2: 20 Nov 2026; v1.1: 26 Oct 2026; v1: 25 Oct 2026) |
+| Owner | Khushboo |
 | Covers | POC (Phase 1) and MVP (Phase 2); later items listed for completeness |
 | Builds on | BAC-5: vision, scope, personas and user journeys |
 | Feeds | BAC-7 (NFRs), BAC-9 (domain model), API design (BAC-18), tests in every phase |
 
+### Changes in v1.3
+
+- **Quiz locked during an exam (new BR-20):** from 5 minutes before an assignment opens until its quiz closes, the quiz cannot be edited, republished or archived. Every student in one assignment sits the same version. Release settings can still change (BR-17). FR-20, FR-21 and the use cases changed to match.
+- **Five rules clarified from BAC-9 (domain model):**
+    - **BR-9 and FR-35:** the newest answer is the one with the highest client sequence number, not the last to arrive.
+    - **BR-17 and FR-24:** shuffling is frozen in the snapshot, like negative marking.
+    - **BR-18 and FR-58:** rank and percentile order by percentage score.
+    - **BR-12, FR-28 and FR-29:** assignments lock 5 minutes before they open.
+    - **BR-13:** a quiz closes once last-start-at plus grace has passed and no attempt is still active.
+- All decided 20 Nov 2026.
+
 ### Changes in v1.2
 
-- **Camera and microphone flags (FR-22):** withdrawn from the MVP and moved to Later (Phase 5), because a flag with no monitoring behind it would suggest checks that do not happen. UC-3, UC-5, the glossary, the decisions table and the requirements count are updated to match.
+- **Camera and microphone move to Phase 5 (FR-22):** proctoring is not built before Phase 5, so the POC and MVP have no camera or microphone flags and ask for no permissions. FR-22 moved from MVP to Later. When proctoring arrives, the browser asks for permission only when a proctored attempt starts. Decided 20 Nov 2026.
+- **Reminder emails expire (FR-31):** a reminder is useful only before the exam starts, so one that has not been sent by the time the window opens is dropped, never sent late. This came from the free-first scaling rule (BAC-8 section 12), where student emails may queue behind teacher emails when the free email quota runs out. Decided 20 Nov 2026.
 
 ### Changes in v1.1
 
@@ -70,11 +82,11 @@
 | FR-17 | A teacher creates a *quiz* in Draft: title, subject, instructions, *duration* in minutes and an ordered list of questions from their bank. | POC | The draft is saved and editable; questions can be added, removed and reordered. |
 | FR-18 | A teacher previews a quiz exactly as a student would see it, without answer keys and without creating an attempt. | MVP | The preview matches the student paper; no attempt is recorded. |
 | FR-19 | A teacher *publishes* a draft. Publishing validates it (at least one question, duration above zero, every question valid) and creates an immutable *snapshot*. | POC | A valid draft becomes Published with snapshot version 1; an invalid one stays Draft with every problem listed. |
-| FR-20 | A teacher edits a published quiz. This creates a new draft *quiz version*; publishing it creates a new snapshot. Attempts already started keep the version they started on. | MVP | A student mid-attempt sees no change; a student starting after the new publish gets the new version. |
-| FR-21 | A teacher archives a quiz. An archived quiz cannot be started; its results remain available. | MVP | Starting an archived quiz is refused; its results still load. |
-| FR-22 | Camera and microphone requirement flags on a quiz, delivered together with real proctoring. Withdrawn from the MVP on 19 Nov 2026: a flag with no monitoring behind it would suggest checks that do not happen. | Later | Phase 5. |
+| FR-20 | A teacher edits a published quiz. This creates a new draft *quiz version*; publishing it creates a new snapshot, used by attempts that start later. While any assignment of the quiz is in its *exam period*, the quiz cannot be edited or republished (BR-20). | MVP | Outside exam periods, edit and publish succeed and later attempts get the new version. During one, both are refused with a "quiz is in an exam" error. All attempts in one assignment use the same version. |
+| FR-21 | A teacher archives a quiz. An archived quiz cannot be started; its results remain available. A quiz cannot be archived during an exam period (BR-20). | MVP | Starting an archived quiz is refused; its results still load; archiving during an exam period is refused. |
+| FR-22 | Proctoring: a teacher requires camera and microphone for a quiz, and the browser asks the student for permission only when a proctored attempt starts, and only for the devices proctoring needs. Until then the POC and MVP have no camera or microphone flags, no permission prompts and nothing recorded. | Later | Phase 5, with proctoring. |
 | FR-23 | A teacher sets *release settings* per quiz, each on or off: (a) show score, (b) show correct answers, (c) show rank and percentile. Defaults: score on, correct answers off, rank and percentile off. The teacher can change them at any time, including after the quiz closes (BR-17). | MVP | Each setting alone controls what students see. Correct answers and rank appear only after *quiz close*. Turning a setting on after close releases it immediately; turning it off hides it again in the app. |
-| FR-24 | A teacher enables shuffling of question order and option order. Each student gets a stable order for their whole attempt. | MVP | Two students see different orders; one student sees the same order after resuming. |
+| FR-24 | A teacher enables shuffling of question order and option order. The setting is frozen in the snapshot (BR-17). Each student gets a stable order for their whole attempt. | MVP | Two students see different orders; one student sees the same order after resuming. |
 | FR-25 | True/false, numeric and short-text questions; tags and search in the question bank. | Later | Phase 3. |
 | FR-26 | Questions from images, and AI-generated questions from a topic description, both reviewed by the teacher before use. | Later | Phase 5. |
 | FR-59 | A teacher sets *negative marking* per quiz: off (default), or a penalty per wrong answer of 1/4, 1/2 or all of that question's marks. Unanswered questions are never penalised. The setting is part of the snapshot, so it cannot change once published (BR-3). | MVP | A quiz published with 1/4 penalty deducts 1 mark for a wrong answer on a 4-mark question and nothing for an unanswered one; editing the penalty after publishing creates a new version. |
@@ -84,10 +96,10 @@
 | ID | Requirement | Phase | Done when |
 | --- | --- | --- | --- |
 | FR-27 | A teacher *assigns* a published quiz to one or more of their classes. | MVP | Only students in those classes see and can start it. In the POC, any student in the school can start any published quiz. |
-| FR-28 | A teacher sets a *start window* for each assignment: opens-at and last-start-at, in IST in the interface and stored in UTC. | MVP | Starts before opens-at or after last-start-at are refused. |
-| FR-29 | A teacher changes or cancels an assignment until its window opens. | MVP | Changes before opens-at succeed; changes after are refused (BR-12). |
+| FR-28 | A teacher sets a *start window* for each assignment: opens-at and last-start-at, in IST in the interface and stored in UTC. Opens-at must be at least 5 minutes away when it is set (BR-12). | MVP | Starts before opens-at or after last-start-at are refused; an opens-at less than 5 minutes away is rejected. |
+| FR-29 | A teacher changes or cancels an assignment until 5 minutes before its window opens. | MVP | Changes up to 5 minutes before opens-at succeed; later ones are refused (BR-12). |
 | FR-30 | A student sees their quizzes grouped as Upcoming, Open now and Completed, with times in IST. | MVP | Each assigned quiz appears in exactly one group, matching the server's clock. |
-| FR-31 | Students who have an email address get a reminder before the window opens. | MVP | The reminder is sent once per student per assignment. |
+| FR-31 | Students who have an email address get a reminder before the window opens. The reminder expires when the window opens: if it has not been sent by then, it is dropped and never sent late. | MVP | The reminder is sent once per student per assignment. With the email queue held back past the opens-at time, no reminder goes out after it. |
 
 ### 3.4 Exam delivery (Exam Delivery service)
 
@@ -96,7 +108,7 @@
 | FR-32 | A student starts an *attempt* on a quiz open to them. The server records the start time, computes the *deadline* and returns the *paper*: questions and options without answer keys. | POC | The response has no correct-answer data; the deadline equals start time plus duration. |
 | FR-33 | Starting again while an attempt is active returns the same attempt instead of creating a new one. | POC | Two start calls, including concurrent ones, produce one attempt (BR-5). |
 | FR-34 | A student saves an answer for a question. A later save for the same question replaces the earlier one. | POC | The latest saved answer is the one scored. |
-| FR-35 | *Autosave* is safe to retry: a repeated or out-of-order save request never overwrites a newer answer or creates a duplicate. | MVP | Replaying the same save, or an older save arriving late, leaves the newest answer in place. |
+| FR-35 | *Autosave* is safe to retry: a repeated or out-of-order save request never overwrites a newer answer or creates a duplicate. Each save carries a *client sequence number* per question, and the highest wins (BR-9). | MVP | Replaying the same save, or an older save arriving late, leaves the newest answer in place. |
 | FR-36 | A student resumes an active attempt from any device after a disconnect: the paper, their saved answers and the remaining time come from the server. | MVP | After a simulated drop, resume returns all saved answers and a remaining time that kept running during the drop. |
 | FR-37 | Every paper, save and resume response includes the server's remaining time, so the client timer can resynchronise. | MVP | Remaining time in responses matches the deadline minus server time. |
 | FR-38 | A student submits the attempt. Submission is final. | POC | After submit, further saves are refused and the attempt is scored. |
@@ -129,7 +141,7 @@
 | FR-55 | Failed emails are retried and eventually parked for inspection. Email failures never affect exams or results. | MVP | With the email provider down, exams complete and results load; emails go out once it recovers. |
 | FR-56 | An admin views results for any quiz in their school. | MVP | Admin sees every teacher's results in the school; none from other schools. |
 | FR-57 | Rankings across classes and quizzes, top N per section, question difficulty and large exports delivered by link. | Later | Phase 3. |
-| FR-58 | When a quiz closes, the system computes each submitted attempt's *rank* and *percentile* within its assignment (BR-18). A student sees only their own rank and percentile, and only if rank release is on (FR-23). | MVP | Ties share a rank (scores 9, 8, 8, 6 rank 1, 2, 2, 4); the top score has percentile 100; no response to a student ever contains another student's name, score or rank. |
+| FR-58 | When a quiz closes, the system computes each submitted attempt's *rank* and *percentile* within its assignment, ordered by percentage score (BR-18). A student sees only their own rank and percentile, and only if rank release is on (FR-23). | MVP | Ties share a rank (scores 9, 8, 8, 6 rank 1, 2, 2, 4); the top score has percentile 100; no response to a student ever contains another student's name, score or rank. |
 
 ### 3.7 Access summary
 
@@ -156,17 +168,18 @@
 | BR-6 | In the POC and MVP, a student gets one attempt per quiz assignment. A submitted attempt cannot be reopened. |
 | BR-7 | The server owns time. The deadline is start time plus duration, computed and stored by the server. The client timer is display only. |
 | BR-8 | An answer counts only if the server received it by the deadline plus the grace period. The grace period's value is set in BAC-7. |
-| BR-9 | For each question, the most recent answer received before the cut-off counts. |
+| BR-9 | For each question, the answer with the highest client sequence number, received before the cut-off, counts. Arrival order does not decide, so a delayed older save never overwrites a newer one. |
 | BR-10 | Submission is final and happens exactly once per attempt, whether by the student or by auto-submit. |
 | BR-11 | Scores are computed by the server from the snapshot's answer key and negative-marking setting only. The client never receives the key unless the quiz has closed and correct-answer release is on. |
-| BR-12 | An assignment's classes and start window can change only before the window opens. |
-| BR-13 | A quiz closes at the last-start-at time plus the duration (plus grace). No attempt on that assignment can be active after it. Correct answers, ranks, percentiles and result emails are released only after close, and only as the release settings allow. |
+| BR-12 | An assignment's classes and start window can change, and it can be cancelled, only until 5 minutes before the window opens. Opens-at must be at least 5 minutes away when set. The 5 minutes let a change reach every service before the first student starts. |
+| BR-13 | A quiz closes once its last-start-at plus the grace period has passed and no attempt on that assignment is still active. Auto-submit makes this happen by last-start-at plus duration plus grace at the latest. Correct answers, ranks, percentiles and result emails are released only after close, and only as the release settings allow. |
 | BR-14 | A question used in a published quiz can be archived but not deleted. A quiz with attempts can be archived but not deleted. |
 | BR-15 | Deactivating a user never deletes their attempts or results. |
 | BR-16 | Every write that a client may retry (start, save, submit) is idempotent. |
-| BR-17 | Release settings are not part of the snapshot, because they never change a score; the teacher can change them at any time. Negative marking is part of the snapshot, because it does change scores. |
-| BR-18 | Rank and percentile are computed among the submitted attempts of one assignment; students who did not attempt are excluded. Equal scores share a rank and the next rank is skipped (1, 2, 2, 4). Percentile = 100 × (attempts with a score less than or equal to this one) ÷ (all submitted attempts), to two decimals, so the top score is always 100. |
+| BR-17 | Release settings are not part of the snapshot, because they never change a score; the teacher can change them at any time. Negative marking and shuffling are part of the snapshot, because they change the score or the paper. |
+| BR-18 | Rank and percentile are computed among the submitted attempts of one assignment; students who did not attempt are excluded. Attempts are ordered by percentage score. Equal percentages share a rank and the next rank is skipped (1, 2, 2, 4). Percentile = 100 × (attempts with a percentage less than or equal to this one) ÷ (all submitted attempts), to two decimals, so the top score is always 100. |
 | BR-19 | A student only ever sees their own result. No student-facing response contains another student's name, score, rank or answers. |
+| BR-20 | During an assignment's *exam period*, from 5 minutes before opens-at until quiz close, its quiz cannot be edited, republished or archived. So every student in one assignment sits the same version. Release settings can still change (BR-17). |
 
 ## 5. Use cases
 
@@ -208,7 +221,7 @@
     5. The teacher publishes it; a snapshot is created (FR-19, BR-3).
 - **Alternate and error paths:**
     - 5a. Validation fails (no questions, invalid question): the quiz stays Draft and every problem is listed.
-    - 6a. The teacher finds a typo after publishing: editing creates a new version; students who already started keep theirs (FR-20, BR-4).
+    - 6a. The teacher finds a typo after publishing. Outside an exam period, she edits and republishes, and later attempts get the new version (FR-20). During an exam period the edit is refused until the quiz closes (BR-20).
     - 6b. A question in the quiz is later edited in the bank: the published quiz is unchanged (FR-15).
 - **Postcondition:** the quiz is Published with an immutable snapshot.
 
@@ -221,9 +234,10 @@
     2. The teacher sets opens-at and last-start-at (FR-28).
     3. Students in those classes see it under Upcoming (FR-30); those with email get a reminder (FR-31).
 - **Alternate and error paths:**
-    - 2a. last-start-at is before opens-at, or opens-at is in the past: rejected.
-    - 4a. The teacher changes the window before it opens: allowed (FR-29).
-    - 4b. The teacher tries to change it after it opens: refused (BR-12).
+    - 2a. last-start-at is before opens-at, or opens-at is less than 5 minutes away: rejected (BR-12).
+    - 4a. The teacher changes the window up to 5 minutes before it opens: allowed (FR-29).
+    - 4b. The teacher tries to change it later than that: refused (BR-12).
+    - 4c. The teacher tries to edit, republish or archive the quiz during the exam period: refused until quiz close (BR-20).
 
 ### UC-5 Take a timed quiz
 
@@ -238,13 +252,12 @@
 - **Alternate and error paths:**
     - **1a. Late join:** the student tries to start after last-start-at. Refused with "start window closed" (FR-42). No attempt is created.
     - **1b. Early:** the student tries before opens-at. Refused with "not open yet".
-    - **1c. Start tapped twice, or a second device:** the same active attempt is returned (FR-33, BR-5).
-    - **3a. Network drop:** saves fail on the client. When the connection returns, the student resumes and gets all answers the server received and the remaining time, which kept running (FR-36, FR-37). Answers the server never received must be re-entered; the client should retry unsent saves first.
+    - **1c. Start tapped twice, or a second device:** the same active attempt is returned (FR-33, BR-5).    - **3a. Network drop:** saves fail on the client. When the connection returns, the student resumes and gets all answers the server received and the remaining time, which kept running (FR-36, FR-37). Answers the server never received must be re-entered; the client should retry unsent saves first.
     - **3b. Save retried or delivered out of order:** the newest answer wins; no duplicates (FR-35, BR-9).
     - **4a. Duplicate submit:** the student taps Submit twice, or the client retries after a timeout. Exactly one submission and one score; both calls return the same result (FR-39, BR-10).
     - **4b. Deadline passed:** the student never submits (phone died, walked away). At the deadline the system auto-submits with saved answers and scores it (FR-41).
     - **4c. Answer after deadline:** a save or submit arrives after deadline plus grace. Refused with "deadline passed"; the attempt is auto-submitted with what was saved before (FR-40, BR-8).
-    - **4d. Quiz edited mid-attempt:** the student continues on the version they started (BR-4).
+    - **4d. Teacher tries to change the quiz mid-exam:** refused (BR-20). The paper never changes during an exam, and every attempt stays bound to its version (BR-4).
 - **Postcondition:** exactly one submitted, scored attempt exists for the student.
 
 ### UC-6 Review results
@@ -285,7 +298,9 @@
 | Duration | The time a student has once they start. |
 | Deadline | Start time plus duration for one attempt, set by the server. |
 | Grace period | A few seconds after the deadline during which late-arriving answers are still accepted, to absorb network delay. Value set in BAC-7. |
-| Quiz close | Last-start-at plus duration plus grace. After it, no attempt on the assignment can be active, and results are released. |
+| Quiz close | The moment last-start-at plus grace has passed and no attempt on the assignment is still active; at the latest last-start-at plus duration plus grace. After it, results are released. |
+| Exam period | From 5 minutes before an assignment's opens-at until its quiz close. The assignment and its quiz are locked (BR-12, BR-20). |
+| Client sequence number | A number the client increases with each save of a question, so the server can tell a newer answer from an older one that arrived late (BR-9). |
 | Attempt | One student's sitting of one quiz version, from start to submission. |
 | Paper | The questions and options sent to a student for an attempt, without answer keys. |
 | Answer | A student's selected option or options for one question in an attempt. |
@@ -297,7 +312,7 @@
 | Release settings | Three per-quiz switches the teacher controls: show score, show correct answers, show rank and percentile. |
 | Rank | A student's position among the submitted attempts of an assignment; equal scores share a rank. |
 | Percentile | The share of submitted attempts in an assignment that scored less than or equal to this one, as a number from 0 to 100. |
-| Proctoring flags | Camera required and microphone required settings on a quiz. Not in the MVP; they arrive with real proctoring in Phase 5 (FR-22). |
+| Proctoring | Camera and microphone requirements, violation events and teacher review. Not in the POC or MVP; arrives in Phase 5 (FR-22). |
 | Idempotency key | A client-generated ID sent with a retryable request, so a repeat is recognised and not applied twice. |
 
 ## 7. Decisions
@@ -312,7 +327,9 @@
 | Multi-correct scoring | All or nothing; partial credit later. | FR-44, FR-46 |
 | Shuffling questions and options | In the MVP, to reduce copying in a classroom. | FR-24 |
 | CSV import when some rows are bad | Reject the whole file and list every error. | FR-3 |
-| Camera and microphone flags in the MVP (decided 19 Nov 2026) | No. They arrive with real proctoring in Phase 5, so the product never implies monitoring it does not do. | FR-22 |
+| Can a quiz change during an exam? (20 Nov 2026) | No. From 5 minutes before an assignment opens until its quiz closes, no edit, republish or archive. Release settings stay changeable. | FR-20, FR-21, BR-20 |
+| Rule clarifications from BAC-9 (20 Nov 2026) | Newest answer by client sequence number; shuffling in the snapshot; rank by percentage; assignments lock 5 minutes before opening; close when no attempt is active | BR-9, BR-12, BR-13, BR-17, BR-18 |
+| Do reminder emails expire? (20 Nov 2026) | Yes. A reminder not sent by the time the window opens is dropped. Result emails do not expire; if the free quota runs out they queue for the next day (NFR-69). | FR-31, FR-54, NFR-69 |
 
 ### 7.2 Details proposed with the new decisions, to confirm
 
@@ -323,8 +340,7 @@
 | Rank ties | Equal scores share a rank and the next is skipped (1, 2, 2, 4) | The usual competition ranking students already know. |
 | Percentile formula | 100 × (attempts scoring ≤ this one) ÷ (all submitted attempts) | Same idea as NTA percentiles: the top score is always 100. |
 | Rank group | Within one assignment, across all classes it was assigned to | Comparable students sat the same paper in the same window. |
-| Settings that can change after publishing | Release settings yes; negative marking no | Release settings never change a score; a penalty does (BR-17). |
-
+| Settings that can change after publishing | Release settings yes; negative marking and shuffling no | Release settings never change a score or the paper; a penalty and shuffling do (BR-17). |
 ### 7.3 Still open
 
 | Question | Why it matters |
